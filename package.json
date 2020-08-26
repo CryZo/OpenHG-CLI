@@ -1,0 +1,31 @@
+{
+  "name": "openhg-cli",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^14.0.14",
+    "chalk": "^4.1.0",
+    "figlet": "^1.5.0",
+    "inquirer": "^7.3.3",
+    "node-fetch": "^2.6.0",
+    "shelljs": "^0.8.4"
+  },
+  "devDependencies": {
+    "@types/figlet": "^1.2.0",
+    "@types/inquirer": "^7.3.1",
+    "@types/node-fetch": "^2.5.7",
+    "@types/shelljs": "^0.8.8",
+    "typescript": "^4.0.2"
+  },
+  "bin": {
+    "openhg-cli": "./dist/index.js"
+  }
+}
