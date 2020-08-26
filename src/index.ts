@@ -8,23 +8,12 @@ import fetch from 'node-fetch';
 
 import { DeviceType } from "./enums/DeviceType";
 import { OhgScreen } from "./enums/OhgScreen";
+import { Data } from "./Data";
+import { MenuData } from "./MenuData";
 
-const url = 'http://192.168.2.14:8081';
+const DataHandler = new Data('http://192.168.2.14:8081');
 
-async function fetchData() {
-	let response = await fetch(`${url}/full`);
-	(<any>global).data = await response.json();
-}
-setInterval(fetchData, 5000);
-
-async function sendCommand(id: string, command: string) {
-	await fetch(`${url}/controll/${id}/${command}`);
-
-	//Update data model
-	await fetchData();
-}
-
-const init = () => {
+const drawLogo = () => {
 	console.log(
 		chalk.cyanBright(figlet.textSync("OpenHG", {font: "Doh"}))
 		+ "\n" +
@@ -32,118 +21,21 @@ const init = () => {
 	);
 }
 
-const chooseRoom = () => {
-	let choices: any[] = [];
-	for (let i in (<any>global).data) {
-		let curRoom: any = (<any>global).data[i];
-		choices.push({
-			name: curRoom.Name,
-			value: curRoom.id
-		});
-	}
-
-	const questions: inquirer.QuestionCollection = [
-		{
-			type: "list",
-			name: "ROOM",
-			message: "Room: ",
-			choices
-		}
-	];
-	return inquirer.prompt(questions);
-};
-
-const chooseDevice = (id: string) => {
-	let choices: any[] = [];
-	for (let d in (<any>global).curRoom.Devices) {
-		let curDev: any = (<any>global).curRoom.Devices[d];
-
-		let suffix: string = '';
-		switch (<DeviceType>curDev.Type) {
-			case DeviceType.Toggle:
-				if (curDev.Status) suffix = chalk.green('On');
-				else suffix = chalk.red('Off');
-				break;
-
-			case DeviceType.RGB:
-				if (curDev.Status) suffix = chalk.hex(curDev.Color)('On');
-				else suffix = chalk.red('Off');
-				break;
-		}
-
-		choices.push({
-			name: `${curDev.Name} ${suffix}`,
-			value: curDev.id
-		});
-	}
-	choices.push({ name: chalk.inverse('Go back'), value: '' });
-
-	const questions: inquirer.QuestionCollection = [
-		{
-			type: "list",
-			name: "DEVICE",
-			message: "Device: ",
-			choices
-		}
-	];
-	return inquirer.prompt(questions);
-};
-
-const chooseRGBMenu = () => {
-	let choices: any[] = [];
-	choices.push({ name: 'Lighten', value: 'lighten' });
-	choices.push({ name: 'Darken', value: 'darken' });
-	choices.push({ name: 'Turn on', value: 'on' });
-	choices.push({ name: 'Turn off', value: 'off' });
-	choices.push({ name: 'Set color', value: 'pickColor' });
-	choices.push({ name: chalk.inverse('Go back'), value: '' });
-
-	const questions: inquirer.QuestionCollection = [
-		{
-			type: "list",
-			name: "RGBCMD",
-			message: "",
-			choices
-		}
-	];
-	return inquirer.prompt(questions);
-};
-
-const chooseColor = () => {
-	let colors: string[] = ['7affd2', '7aff83', 'ffc97a', 'b87aff', '8e7aff', '7aa4ff'];
-
-	let choices: any[] = [];
-	for (let i in colors) {
-		choices.push({ name: `Set ${(<any>global).curDev.Name} to ` + chalk.hex(colors[i])('■'), value: colors[i] });
-	}
-	choices.push({ name: chalk.inverse('Go back'), value: '' });
-
-	const questions: inquirer.QuestionCollection = [
-		{
-			type: "list",
-			name: "COLOR",
-			message: "",
-			choices
-		}
-	];
-	return inquirer.prompt(questions);
-};
-
-const run = async () => {
+const mainLoop = async () => {
 	console.clear();
-	init();
-	await fetchData();
+	drawLogo();
+	await DataHandler.fetchData();
 
 	let curScreen: OhgScreen;
 
 	while (true) {
 		console.clear();
-		init();
+		drawLogo();
 
 		switch (curScreen) {
 			default:
 			case OhgScreen.Room:
-				const { ROOM } = await chooseRoom();
+				const { ROOM } = await MenuData.chooseRoom();
 
 				for (let i in (<any>global).data) {
 					let curRoom: any = (<any>global).data[i];
@@ -154,12 +46,11 @@ const run = async () => {
 				}
 
 				curScreen = OhgScreen.Device;
-
 				break;
 
 			case OhgScreen.Device:
 				console.log(chalk.bold.inverse((<any>global).curRoom.Name))
-				const { DEVICE } = await chooseDevice((<any>global).curRoom.id);
+				const { DEVICE } = await MenuData.chooseDevice((<any>global).curRoom.id);
 
 				if (DEVICE != '') {
 
@@ -173,7 +64,7 @@ const run = async () => {
 
 					switch (<DeviceType>(<any>global).curDev.Type) {
 						case DeviceType.Toggle:
-							await sendCommand((<any>global).curDev.id, 'toggle');
+							await DataHandler.sendCommand((<any>global).curDev.id, 'toggle');
 							break;
 
 						case DeviceType.RGB:
@@ -187,7 +78,7 @@ const run = async () => {
 
 			case OhgScreen.RGBMenu:
 				console.log(chalk.bold.inverse((<any>global).curDev.Name))
-				const { RGBCMD } = await chooseRGBMenu();
+				const { RGBCMD } = await MenuData.chooseRGBMenu();
 
 				switch (RGBCMD) {
 					case '':
@@ -200,7 +91,7 @@ const run = async () => {
 
 					default:
 						//Fire and forget
-						await sendCommand((<any>global).curDev.id, RGBCMD);
+						await DataHandler.sendCommand((<any>global).curDev.id, RGBCMD);
 						curScreen = OhgScreen.Device
 						break;
 				}
@@ -208,7 +99,7 @@ const run = async () => {
 
 			case OhgScreen.ColorPicker:
 				console.log(chalk.bold.inverse((<any>global).curDev.Name))
-				const { COLOR } = await chooseColor();
+				const { COLOR } = await MenuData.chooseColor();
 
 				switch (COLOR) {
 					case '':
@@ -216,7 +107,7 @@ const run = async () => {
 						break;
 
 					default:
-						await sendCommand((<any>global).curDev.id, COLOR);
+						await DataHandler.sendCommand((<any>global).curDev.id, COLOR);
 						curScreen = OhgScreen.Device;
 						break;
 				}
@@ -225,4 +116,4 @@ const run = async () => {
 	}
 };
 
-run();
+mainLoop();
