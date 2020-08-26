@@ -26,19 +26,9 @@ async function sendCommand(id: string, command: string) {
 
 const init = () => {
 	console.log(
-		chalk.green(
-			figlet.textSync("OpenHG", {
-				font: "Doh",
-				horizontalLayout: "default",
-				verticalLayout: "default"
-			})
-			+ "\n" +
-			figlet.textSync("Command Line Interface", {
-				font: "Cybermedium",
-				horizontalLayout: "default",
-				verticalLayout: "default"
-			})
-		)
+		chalk.cyanBright(figlet.textSync("OpenHG", {font: "Doh"}))
+		+ "\n" +
+		chalk.magentaBright.bold(figlet.textSync("Command Line Interface", {font: "Cybermedium"}))
 	);
 }
 
@@ -101,7 +91,7 @@ const chooseDevice = (id: string) => {
 
 const chooseRGBMenu = () => {
 	let choices: any[] = [];
-	choices.push({ name: 'Lighten', value: 'brighten' });
+	choices.push({ name: 'Lighten', value: 'lighten' });
 	choices.push({ name: 'Darken', value: 'darken' });
 	choices.push({ name: 'Turn on', value: 'on' });
 	choices.push({ name: 'Turn off', value: 'off' });
