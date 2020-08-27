@@ -7,8 +7,10 @@ import { DeviceType } from "./enums/DeviceType";
 import { OhgScreen } from "./enums/OhgScreen";
 import { Data } from "./Data";
 import { MenuData } from "./MenuData";
+import { ConfigHandler } from "./ConfigHandler";
 
-const DataHandler = new Data('http://192.168.2.14:8081');
+const ch = new ConfigHandler();
+let DataHandler:Data;
 
 const drawLogo = () => {
 	console.log(
@@ -21,6 +23,9 @@ const drawLogo = () => {
 const mainLoop = async () => {
 	console.clear();
 	drawLogo();
+
+	await ch.loadConfig();
+	DataHandler = new Data(ch.config.backendUrl);
 	await DataHandler.fetchData();
 
 	let curScreen: OhgScreen;
