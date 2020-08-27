@@ -1,10 +1,7 @@
 #!/usr/bin/env node
 
-import inquirer from "inquirer";
 import chalk from "chalk";
 import figlet from "figlet";
-import shell from "shelljs";
-import fetch from 'node-fetch';
 
 import { DeviceType } from "./enums/DeviceType";
 import { OhgScreen } from "./enums/OhgScreen";
